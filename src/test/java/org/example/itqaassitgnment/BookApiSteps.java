@@ -156,4 +156,76 @@ public class BookApiSteps {
         logger.info("Verifying response with status code {}", statusCode);
         Assertions.assertEquals(statusCode, response. getStatusCode().value());
     }
+
+    // Delete a Book by ID
+    @When("I delete the book with ID {string}")
+    public void i_delete_the_book_with_id(String id) {
+        logger.info("Deleting book with ID {}", id);
+        String url = backendServerUrl + "/api/books/" + id;
+        HttpHeaders headers = createAuthHeaders();
+
+        try {
+            response = restTemplate.exchange(url, HttpMethod.DELETE, new HttpEntity<>(headers), String.class);
+        } catch (HttpClientErrorException e) {
+            logger.error("Error deleting book with ID {}: {}", id, e.getMessage());
+            response = new ResponseEntity<>(e.getStatusCode());
+        }
+    }
+
+    @Then("The book should be deleted successfully")
+    public void the_book_should_be_deleted_successfully() {
+        logger.info("Verifying book deletion");
+        Assertions.assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    }
+
+    // Update Book
+    @When("I update the book with following details:")
+    public void i_update_the_book_with_following_details(DataTable dataTable) {
+        List<Map<String, String>> bookDataList = dataTable.asMaps(String.class, String.class);
+        for (Map<String, String> bookData : bookDataList) {
+            String id = bookData.get("id");
+            logger.info("Updating book with ID {} with details: {}", id, bookData);
+            String url = backendServerUrl + "/api/books/" + id;
+            HttpHeaders headers = createAuthHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("id", bookData.get("id"));
+            requestBody.put("title", bookData.get("title"));
+            requestBody.put("author", bookData.get("author"));
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            try {
+                response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+            } catch (HttpClientErrorException e) {
+                logger.error("Error updating book with ID {}: {}", id, e.getMessage());
+                response = new ResponseEntity<>(e.getStatusCode());
+            }
+        }
+    }
+
+    @Then("The book should be updated successfully")
+    public void the_book_should_be_updated_successfully() {
+        logger.info("Verifying book update");
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Then("I should see the updated book details")
+    public void i_should_see_the_updated_book_details() {
+        logger.info("Verifying the updated book details");
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> updatedBookDetails = objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>(){});
+            if (updatedBookDetails.isEmpty()) {
+                logger.info("No updated book details found.");
+                return;
+            }
+            logger.info("Updated book details: {}", updatedBookDetails);
+        } catch (JsonProcessingException e) {
+            logger.error("Error processing JSON response: {}", e.getMessage());
+            Assertions.fail("Failed to parse the response body as JSON");
+        }
+    }
 }
