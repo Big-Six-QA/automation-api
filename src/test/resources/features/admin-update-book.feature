@@ -7,7 +7,7 @@ Feature: Update Book API
     When I update the book with following details:
       | id | title | author |
       | 1 | new title | new author |
-    Then the book should be updated successfully
+    Then The book should be updated successfully
     And I should see the updated book details
 
   Scenario: Update an existing book with empty title
