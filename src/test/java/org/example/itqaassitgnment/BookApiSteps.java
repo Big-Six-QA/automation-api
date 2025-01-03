@@ -150,4 +150,10 @@ public class BookApiSteps {
             Assertions.fail("Failed to parse the response body as JSON");
         }
     }
+
+    @Then("I should see a {int} Already Reported message")
+    public void i_should_see_a_already_reported_message(int statusCode) {
+        logger.info("Verifying response with status code {}", statusCode);
+        Assertions.assertEquals(statusCode, response. getStatusCode().value());
+    }
 }
