@@ -15,3 +15,22 @@ Feature: Create Book API
       | title | author |
       |       |        |
     Then I should see a 400 error message
+
+    #user-create-book.feature
+  Scenario: Create a book with missing title
+    When I create a new book with following details:
+      | title | author |
+      |       | test author 5 |
+    Then I should see a 400 error message
+
+  Scenario: Create a book with missing author
+    When I create a new book with following details:
+      | title | author |
+      | test title 36 |        |
+    Then I should see a 400 error message
+
+  Scenario: Create a new book with existent values
+    When I create a new book with following details:
+      | title | author |
+      | title 1 | author 1 |
+    Then I should see a 208 Already Reported message
