@@ -1,5 +1,9 @@
 package org.example.itqaassitgnment;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -10,6 +14,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SpringBootTest
 public class BookApiSteps {
@@ -58,5 +66,88 @@ public class BookApiSteps {
     public void i_should_see_a_error_message(int statusCode) {
         logger.info("Verifying error message with status code {}", statusCode);
         Assertions.assertEquals(statusCode, response. getStatusCode().value());
+    }
+
+    // Create Book
+    @When("I create a new book with following details:")
+    public void i_create_a_new_book_with_following_details(DataTable dataTable) {
+        List<Map<String, String>> bookDataList = dataTable.asMaps(String.class, String.class);
+        for (Map<String, String> bookData : bookDataList) {
+            logger.info("Creating a new book with details: {}", bookData);
+            String url = backendServerUrl + "/api/books";
+            HttpHeaders headers = createAuthHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("title", bookData.get("title"));
+            requestBody.put("author", bookData.get("author"));
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            try {
+                response = restTemplate.postForEntity(url, entity, String.class);
+            } catch (HttpClientErrorException e) {
+                logger.error("Error creating book: {}", e.getMessage());
+                response = new ResponseEntity<>(e.getStatusCode());
+            }
+        }
+    }
+
+    @Then("The book should be created successfully")
+    public void the_book_should_be_created_successfully() {
+        logger.info("Verifying book creation");
+        Assertions.assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
+
+    // Get All Books
+    @When("I visit all book page")
+    public void i_visit_the_all_book_page() {
+        logger.info("Visiting the all book page as {}", role);
+        String url = backendServerUrl + "/api/books";
+        HttpHeaders headers = createAuthHeaders();
+        response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    }
+
+    // Return all books
+    @Then("I should see the list of books")
+    public void i_should_see_the_list_of_books() {
+        logger.info("Verifying the list of books");
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> books = objectMapper.readValue(response.getBody(), new TypeReference<List<Map<String, Object>>>(){});
+            if (books.isEmpty()) {
+                logger.info("The list of books is empty, which is acceptable.");
+                return;
+            }
+            logger.info("List of books: {}", books);
+
+        } catch (JsonProcessingException e) {
+            logger.error("Error processing JSON response: {}", e.getMessage());
+            Assertions.fail("Failed to parse the response body as JSON");
+        }
+    }
+
+    // View the book details
+    @Then("I should see the book information")
+    public void i_should_see_the_book_information() {
+        logger.info("Verifying book information");
+        Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> bookDetails = objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>(){});
+
+            if (bookDetails.isEmpty()) {
+                logger.info("No book found with id {}", bookId);
+                return;
+            }
+
+            logger.info("Book details: {}", bookDetails);
+
+        } catch (JsonProcessingException e) {
+            logger.error("Error processing JSON response: {}", e.getMessage());
+            Assertions.fail("Failed to parse the response body as JSON");
+        }
     }
 }
