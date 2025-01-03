@@ -10,3 +10,11 @@ Feature: Get Books API
   Scenario: Get existent book by ID
     When I request a book with ID "1"
     Then I should see the book information
+
+  Scenario: Get non-existing book
+    When I request a book with ID "999"
+    Then I should see a 404 error message
+
+  Scenario: Get book with invalid ID format
+    When I request a book with ID "abc"
+    Then I should see a 400 error message
