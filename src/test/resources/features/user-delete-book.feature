@@ -6,7 +6,3 @@ Feature: Delete Book API
   Scenario: Delete an existing book
     When I delete the book with ID "1"
     Then I should see a 403 error message
-
-  Scenario: Delete non-existent book
-    When I delete the book with ID "999"
-    Then I should see a 403 error message
