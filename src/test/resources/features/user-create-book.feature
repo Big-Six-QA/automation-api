@@ -32,5 +32,5 @@ Feature: Create Book API
   Scenario: Create a new book with existent values
     When I create a new book with following details:
       | title | author |
-      | title 1 | author 1 |
+      | new title | author 1 |
     Then I should see a 208 Already Reported message
